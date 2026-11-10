@@ -11,3 +11,10 @@ No app, cole a URL do servidor (https://... se for na nuvem).
 
 ## Fotos
 Frente, perfil esquerdo e perfil direito (60° a 90°). Luz uniforme, cabelo fora do rosto, sem óculos.
+
+## Molde do mod (importante)
+Coloque a cabeça exportada do seu mod em server/template.glb (é o arquivo CR720_head_v6b_rigid_jaw.glb renomeado).
+O servidor mantém os ossos, a malha e o atlas desse molde e só ajusta o formato e a pele ao seu rosto.
+Esse arquivo é do jogo: deixe-o fora de repo público (já está no .gitignore). No Render/Space, envie-o por fora
+ou use um repo privado e a variável TEMPLATE_GLB.
+Sem o template.glb, o servidor cai no modo genérico (malha própria).

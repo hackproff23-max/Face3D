@@ -73,22 +73,31 @@ def vertex_normals(P, tri):
     return n / l
 
 
-def fuse(views):
-    """views[0] = frente. Alinha as outras e mistura por quão de frente cada ponto está para a câmera."""
+def fuse_full(views):
+    """Mistura as vistas no referencial da frente. Retorna (P_blend, sims) onde sims[i] = (s, R, t, cam_dir)
+    leva pontos da vista i para o referencial da frente (p_front = s*R@p + t); a frente tem sim identidade."""
     front = views[0]
     n0 = vertex_normals(front, triangulate(front))
-    num = front * (np.clip(n0[:, 2], 0, 1) ** 2 + 0.05)[:, None]
-    den = np.clip(n0[:, 2], 0, 1) ** 2 + 0.05
+    w0 = np.clip(n0[:, 2], 0, 1) ** 2 + 0.05
+    num = front * w0[:, None]
+    den = w0.copy()
+    sims = [(1.0, np.eye(3), np.zeros(3), np.array([0, 0, 1.0]))]
     for v in views[1:]:
-        s, R, t = umeyama(v[_anchors_for(v)], front[_anchors_for(v)])
+        a = _anchors_for(v)
+        s, R, t = umeyama(v[a], front[a])
         aligned = s * (v @ R.T) + t
-        w = np.clip(n0 @ (R @ np.array([0, 0, 1.0])), 0, 1) ** 2
+        cam = R @ np.array([0, 0, 1.0])
+        w = np.clip(n0 @ cam, 0, 1) ** 2
         num += aligned * w[:, None]
         den = den + w
-    P = num / den[:, None]
-    P *= 0.22 / np.linalg.norm(P[10] - P[152])  # altura do rosto ~22 cm
-    P -= P.mean(0)
-    return P
+        sims.append((s, R, t, cam))
+    return num / den[:, None], sims
+
+
+def fuse(views):
+    P, _ = fuse_full(views)
+    P = P * (0.22 / np.linalg.norm(P[10] - P[152]))  # altura do rosto ~22 cm
+    return P - P.mean(0)
 
 
 def build_rig(P):
